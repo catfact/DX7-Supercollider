@@ -246,7 +246,13 @@ DX7Clone {
 
 	var dumm, selector = #[66, 48, 54, 60, 66];
 
+	var novaDX7;
+
 	var s;
+
+	/// FIXME (emb) i dunno about files in classes and pathes and &C
+	var r;
+	var g, k;
 
 	*new { arg server;
 
@@ -256,6 +262,8 @@ DX7Clone {
 
 	init { arg server;
 		s = server;
+
+		novaDX7 = ParGroup.new(s);
 
 		lfoSqr = Buffer.alloc(s, 512, 1);
 		lfoSawDown = Buffer.alloc(s, 512, 1);
@@ -618,7 +626,7 @@ DX7Clone {
 	}
 
 
-	defme = { arg a1,b1;
+	defme { arg a1,b1;
 		var a , bil, ptchEnv,
 		envL  = Array2D.new(6,5),
 		envR  = Array2D.new(6,4),
@@ -651,7 +659,7 @@ DX7Clone {
 			envL[y,4] = envL[y,0];
 		};
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		bil = defjamHead.value(1);
+		bil = defjamHead(1);
 		a =[
 			\pitch, (a1 + vr[131] - 24 ).midicps,
 			\amp, b1.linlin(0,127,-18,18)];
@@ -699,7 +707,7 @@ DX7Clone {
 			];
 
 		};
-		ptchEnv = defPitchEnv.value((99-vr[139]),(99-vr[140]),(99-vr[141]),(99-vr[142]),vr[143],vr[144],vr[145],vr[146]);
+		ptchEnv = defPitchEnv((99-vr[139]),(99-vr[140]),(99-vr[141]),(99-vr[142]),vr[143],vr[144],vr[145],vr[146]);
 		a = bil ++ a ++ ptchEnv;
 		a = a ++ [\osc_sync, ((vr[130] * (-1)) + 1)];
 		//a.postln;
@@ -717,20 +725,20 @@ DX7Clone {
 						if(betass == 1,   {
 							headno.free;
 							betass = 1;
-							headno = Synth.before(novaDX7,\InfEfx, defjamHead.value(0));
+							headno = Synth.before(novaDX7,\InfEfx, defjamHead(0));
 						},
 						{
 							betass = 1;
-							headno = Synth.before(novaDX7, \InfEfx, defjamHead.value(0))
+							headno = Synth.before(novaDX7, \InfEfx, defjamHead(0));
 						}
 					)},
 					{
 						if(betass == 0,   {
-							betass = 1;headno = Synth.before(novaDX7 ,\InfEfx, defjamHead.value(0)).onFree{/*betass = 0*/}},
+							betass = 1;headno = Synth.before(novaDX7 ,\InfEfx, defjamHead(0)).onFree{/*betass = 0*/}},
 						{
-							headno.set(defjamHead.value(0))});
+							headno.set(defjamHead(0))});
 					});
-					noteArrayDX7[note] = Synth(\DX7 ,defme.value(note, vel),novaDX7);
+					noteArrayDX7[note] = Synth(\DX7, defme(note, vel),novaDX7);
 					//noteArrayDX7[note] = Synth(\DX7 ,defme.value(note, vel), novaDX7); //orjburayi addtotail diye degistirdin
 
 				},
@@ -767,7 +775,7 @@ DX7Clone {
 			g = r.getLine;
 			145.do({arg item;
 				k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
-				f.value(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
+				f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
 				//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
 
 			});
