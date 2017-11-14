@@ -720,8 +720,8 @@ DX7Clone {
 			if(vel > 0,
 				{
 					//150.do({ arg c; ("cc#" ++ c.asString ++ " = " ++ vr[c]).postln}); //general cc printer, rates are not inverted.
-					if(noteArrayDX7[note] !== nil,noteArrayDX7[note].free);
-					if(vr[137] == 1, {//lfo sync controller
+					if(noteArrayDX7[note] !== nil, { noteArrayDX7[note].free });
+					if(vr[137] == 1, { //lfo sync controller
 						if(betass == 1,   {
 							headno.free;
 							betass = 1;
@@ -763,24 +763,44 @@ DX7Clone {
 
 	note {
 		arg x, y, z;
-		if(y > 0,{
+		var p;
+		if(y > 0, {
 			////////////////////////////////////////////////////////////////////////
 			/// FIXME (emb): this file should absolutely be loaded into RAM at classinit!
 			// (and dunno about ye pathes)
-			r = File("DX7.afx".resolveRelative,"r");
-			//r = File("/Users/EmanTnuocca/Desktop/3/DX7.afx","r");
-			z.do({
-				r.getLine;
-			});
-			g = r.getLine;
-			145.do({arg item;
-				k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
-				f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
-				//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
+//			r = File("DX7.afx".resolveRelative,"r");
 
+
+			/// FIXME: omg this is so bad;
+			/// currently, the file `DX7.afx` *must* bee installed at top of supercoll/ider app support
+			////
+			/// !!!!!!!!!!!!!! OMG !!!!!!!!!!!!!!!!!!!!!!!
+			///
+			/// this is very nogood, to look at filesyxxxtem every noteon
+			//
+			/// like put the data in another class or somethingx
+
+//			r = File(Platform.userAppSupportDir ++ "/DX7.afx");
+			p = Platform.userAppSupportDir ++ "/DX7.afx";
+			r = File(p, "r");
+
+
+//			if(false, {
+
+				z.do({
+					r.getLine;
+				});
+				g = r.getLine;
+				//// FIXME (emb) wth is this
+				145.do({arg item;
+					k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
+					this.f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
+					//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
+
+				});
 			});
-		});
-		this.noteParser(y, x)
+	// 	});
+//		this.noteParser(y, x)
 
 	}
 	//// thus endes dx7 by cannc <-- all hail
