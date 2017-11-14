@@ -4,7 +4,7 @@
 
 //Example
 ( // Note On 80 message with velocity value 100 and preset value 10000
-~mainCaller.value(80, 100, 10002);
+~mainCaller.value(80, 80, 10003);
 )
 ( // Note Off message
 ~mainCaller.value(80, 0);
@@ -303,7 +303,7 @@ SynthDef(\InfEfx, {
 	//
 	FreeSelf.kr(gate);
 	lfo = Osc.ar(lfo_wave,lfo_speed, lfo_phase, 0.5 * lfoGet2, 0.5 * lfoGet2) + LFNoise0.ar(lfo_speed, 0.5 * lfoGet1, 0.5 * lfoGet1);
-	lfo = lfo * EnvGen.ar(Env.asr(lfo_delay,releaseTime:0.01, curve: -5),envTrig);
+	lfo = lfo * EnvGen.ar(Env.asr(lfo_delay,releaseTime:0.01, curve: -5), envTrig);
 	multiPitch = LinLin.ar(lfo, 0, 1, (pitchCons.neg.midiratio * tameM) + tameC, pitchCons.midiratio);
 	lfoAmp = LinLin.ar(lfo, 0, 1, lfo_amd * (-3/4), 0);
 
@@ -388,7 +388,7 @@ SynthDef(\DX7, {
 		(out[4] * 1 * dn40),
 		(out[5] * 1 * dn41),
 	]);
-	FreeSelfWhenDone.kr(Line.kr(0, 1, 10));
+//	FreeSelfWhenDone.kr(Line.kr(0, 1, 10));
 	kilnod = DetectSilence.ar(out, 0.01, 0.2, doneAction:2);
 	//out = out * Lag2.ar(In.ar(busMe),0.01);
 	//Out.ar([0,1], 0.5 * In.ar(busMe)); //deneme
@@ -670,6 +670,7 @@ noteParser = { arg vel, note;
 
 				},
 				{
+				postln(["noteoff", note);
 					noteArrayDX7[note].set(\gate,0);
 					noteArrayDX7[note] = nil;
 
