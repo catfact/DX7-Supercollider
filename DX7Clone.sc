@@ -11,7 +11,6 @@ refactor by catfact(or)
 -- instantiate one of these with a running Server
 -------------------------------------------------
 
-
 */
 
 
@@ -222,9 +221,7 @@ DX7Clone {
 
 	var vr;
 	var noteArrayDX7 ;
-	var defme, defjamHead, betass = 0, headno, defPitchEnv, noteParser;
-	var dumm;
-
+	var betass = 0, headno;
 
 	var lfoSqr;
 	var lfoSawDown;
@@ -242,7 +239,6 @@ DX7Clone {
 
 	var pitchTameConst, pitchTameMult;
 
-	var defme, defjamHead, betass = 0, headno, defPitchEnv, noteParser;
 
 	var dumm, selector = #[66, 48, 54, 60, 66];
 
@@ -381,7 +377,7 @@ DX7Clone {
 
 			Out.ar(busMePitch, multiPitch);
 			Out.ar(busMeAmp, lfoAmp)
-		}).add;
+		}).send(s);
 
 
 		SynthDef(\DX7, {
@@ -463,7 +459,7 @@ DX7Clone {
 			//out = out * ((totVol -15).dbamp);
 			Out.ar(outBus, out.dup); //orj
 
-		}).add;
+		}).send(s);
 
 	} // /init
 
@@ -550,14 +546,16 @@ DX7Clone {
 			}
 		);
 		//[dbStr, dbEnd, endR0].postln;
-		[dbStr, dbEnd, endR0];
+		^[dbStr, dbEnd, endR0]
 
 	}
 
 
 	defjamHead { arg a1;
 		var abc = [], cba = [], algo, fdbIndNo = Array.fill(42, 1), lfoDepth, lfoGet1, lfoGet2;
-		if((a1 == 1),
+		var retval;
+
+		retval = if((a1 == 1),
 			{
 				algo = (vr[128]).clip(0,31);
 				abc = [\outMult, outOscVol[vr[128]]];
@@ -568,7 +566,7 @@ DX7Clone {
 						arg x;
 						abc = abc ++ [\dn ++ x, (wf[algo,x] * fdbIndNo[x])];
 				});
-				abc;
+				abc
 			},
 			{
 				if(vr[133] == 5, {lfoGet1=1; lfoGet2 =0}, {lfoGet1 = 0; lfoGet2 =1 });
@@ -590,10 +588,14 @@ DX7Clone {
 					\lfo_amd, dx7_voice_amd_to_ol_adjustment[vr[136]]
 				];
 				//cba.postln;
-				cba;
+				cba
 				//a y.removeAt(1); ['a', 'b', 'c'].do({ arg item, i; [i, item].postln; });
 			}
 		);
+
+		postln(retval);
+
+		^retval;
 	}
 
 
@@ -622,7 +624,7 @@ DX7Clone {
 			\envPR3, envPR3
 		];
 		//endy.postln;
-		endy;
+		^endy
 	}
 
 
@@ -659,7 +661,7 @@ DX7Clone {
 			envL[y,4] = envL[y,0];
 		};
 		//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		bil = defjamHead(1);
+		bil = this.defjamHead(1);
 		a =[
 			\pitch, (a1 + vr[131] - 24 ).midicps,
 			\amp, b1.linlin(0,127,-18,18)];
@@ -707,52 +709,68 @@ DX7Clone {
 			];
 
 		};
-		ptchEnv = defPitchEnv((99-vr[139]),(99-vr[140]),(99-vr[141]),(99-vr[142]),vr[143],vr[144],vr[145],vr[146]);
+		ptchEnv = this.defPitchEnv((99-vr[139]),(99-vr[140]),(99-vr[141]),(99-vr[142]),vr[143],vr[144],vr[145],vr[146]);
 		a = bil ++ a ++ ptchEnv;
 		a = a ++ [\osc_sync, ((vr[130] * (-1)) + 1)];
 		//a.postln;
-		a;
+		^a
 
 	}
 
 	noteParser { arg vel, note;
+
 		1.do { arg yxx;
 			if(vel > 0,
 				{
 					//150.do({ arg c; ("cc#" ++ c.asString ++ " = " ++ vr[c]).postln}); //general cc printer, rates are not inverted.
 					if(noteArrayDX7[note] !== nil, { noteArrayDX7[note].free });
+
+
+					postln("done free check");
+
+					postln(vr);
+					postln(vr[137]);
+
 					if(vr[137] == 1, { //lfo sync controller
 						if(betass == 1,   {
+							postln("betass == 1");
 							headno.free;
 							betass = 1;
-							headno = Synth.before(novaDX7,\InfEfx, defjamHead(0));
+							headno = Synth.before(novaDX7,\InfEfx, this.defjamHead(0));
 						},
 						{
+
+							postln("betass != 1");
 							betass = 1;
-							headno = Synth.before(novaDX7, \InfEfx, defjamHead(0));
+							headno = Synth.before(novaDX7, \InfEfx, this.defjamHead(0));
 						}
 					)},
 					{
-						if(betass == 0,   {
-							betass = 1;headno = Synth.before(novaDX7 ,\InfEfx, defjamHead(0)).onFree{/*betass = 0*/}},
-						{
-							headno.set(defjamHead(0))});
+						postln("not lfo");
+						if(betass == 0, {
+							betass = 1;
+							headno = Synth.before(novaDX7, \InfEfx, this.defjamHead(0)).onFree{
+								postln(["freeing", headno]);
+							};
+							postln(headno);
+						}, {
+							headno.set(this.defjamHead(0))
+						});
 					});
-					noteArrayDX7[note] = Synth(\DX7, defme(note, vel),novaDX7);
+					noteArrayDX7[note] = Synth(\DX7, this.defme(note, vel),novaDX7);
 					//noteArrayDX7[note] = Synth(\DX7 ,defme.value(note, vel), novaDX7); //orjburayi addtotail diye degistirdin
 
 				},
 				{
-					//					postln(["noteoff", note);
 					noteArrayDX7[note].set(\gate,0);
 					noteArrayDX7[note] = nil;
 
-			})
+			});
 		}
 	}
 
 
-	////////////////////// FIXME wtf (emb)
+	/// FIXME: this is odd
 	f { arg x, y ,z; //y value, z cc no
 		if(x == 3,
 			{ vr[y] = z },
@@ -765,44 +783,28 @@ DX7Clone {
 		arg x, y, z;
 		var p;
 		if(y > 0, {
-			////////////////////////////////////////////////////////////////////////
-			/// FIXME (emb): this file should absolutely be loaded into RAM at classinit!
-			// (and dunno about ye pathes)
-//			r = File("DX7.afx".resolveRelative,"r");
-
-
-			/// FIXME: omg this is so bad;
-			/// currently, the file `DX7.afx` *must* bee installed at top of supercoll/ider app support
-			////
-			/// !!!!!!!!!!!!!! OMG !!!!!!!!!!!!!!!!!!!!!!!
-			///
-			/// this is very nogood, to look at filesyxxxtem every noteon
-			//
-			/// like put the data in another class or somethingx
-
-//			r = File(Platform.userAppSupportDir ++ "/DX7.afx");
+			// FIXME: currently the data file must be installed at top of app support/supercollider.
+			// that's not very great.
+			// more importantly, should absolutely not be loading
+			// plan to just add contents of DX7.afx to a separate data class.
 			p = Platform.userAppSupportDir ++ "/DX7.afx";
 			r = File(p, "r");
 
-
-//			if(false, {
-
-				z.do({
-					r.getLine;
-				});
-				g = r.getLine;
-				//// FIXME (emb) wth is this
-				145.do({arg item;
-					k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
-					this.f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
-					//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
-
-				});
+			z.do({
+				r.getLine;
 			});
-	// 	});
-//		this.noteParser(y, x)
+			g = r.getLine;
+			/// FIXME: seems inefficient
+			145.do({arg item;
+				k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
+				this.f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
+				//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
+
+			});
+		});
+		this.noteParser(y, x)
 
 	}
 	//// thus endes dx7 by cannc <-- all hail
 
-} // THEE ENDxs
+} // THEE ENDE
