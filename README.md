@@ -1,12 +1,11 @@
 # DX7-Supercollider
-
 ### My accurate Yamaha DX-7 clone. Programmed in Supercollider.
 
 This is a super-exact clone of DX7 in SC environment. This project began with my internship at the STEIM during the last year; I was able to get my hands on an original DX7 synth and eventually found out that this instrument has this mystic / unusual sound. So I started fiddling with it and did some experiments with Supercollider. After a while, it became an obsession to play with it and started to copy parts of its synth mechanism just to flex my DSP muscles. Sooner, I found myself in this vast project to clone the entire thing. After 2-3 months of implementing process and lots of sleepless nights. I was able to clone the entire DX7 engine with very high accurate results. Other than the DX7’s vintage sound hiss, it is hard to distinguish between the clone and the original one on the same presets. For my use, I collected some 16384 (2^14) DX7 Sysex bank presets from the internet and converted it to some integer sequences to read it from Supercollider. I am also combining this clone with this 16384 preset package. Currently, I am using it with my sequencers to modulate its parameters, but for everyone's ease of use, I implemented a very basic function call. Which calls notes with this format: [Midi note, velocity, preset number]. Additional documentation is in the file. Have fun!
 
 ## Getting Started
 
-You don't need to open the DX7.afx file. It just needs to be in the same directory as the DX7.scd. Just open the DX7.scd in Supercollider and run the big chunk of code starting from the line 35 and it's ready to use. Then run the mainCaller functions for new notes and to close notes send zero velocity from the mainCaller functions.
+make sure the DX7Clone.sc class is in your ~/.local/share/SuperCollider/Extensions/ directory.  Ensure DX7.afx is in ~/.local/share/Supercollider directory. then sclang DX7Clone_test.scd from anywhere.
 
 ### Prerequisites
 
@@ -28,23 +27,8 @@ You can try these kinds of example by running the code at the very end of the DX
 ### Basic MIDI implementation
 
 It’s a very straightforward process; the preset number selection can be made by two different MIDI CCs. At total 128 * 128 = 16384 number is needed, which makes you able to choose the entire library of presets (2 ^ 14).
-Code format example:
 
-```
-MIDIdef.noteOn(\DX7, {arg vel, note;
-~mainCaller.value(note, vel, ~cc1 * ~cc2);
-},srcID:~midiInINST,chan:0).add;
-
-MIDIdef.cc(\DX7CC, {arg ...args;
-~cc1 = args[0];
-~cc2 = args[1];
-},(0..1),srcID:~midiInINST,chan:0).add;
-
-MIDIdef.noteOff(\DX7off, {arg vel, note;
-~mainCaller.value(note, 0);
-},srcID:~midiInINST,chan:0).add;
-```
-
+See DX7Clone_test.scd for practical example
 
 ## Author
 
@@ -72,6 +56,14 @@ i've refactored the original `DX7.scd` script into a class called `DX7Clone.sc`,
 
 the class file can be installed anywhere SC looks for extensions.
 
+## addendum (RV)
+
+- load the preset file into memory on init
+- untangled preset logic a bit
+- added ‘channel’ to the noteParser so you can can independently play the same note with different preset (by putting on a different ‘channel’)
+- Added DC blocker to note silence detection
+- Add a method for noteFreeTimeout (-1 is no timeout)
+
 **the data file `DX7.afx` must be installed at the top of the user's supercollider support directory (e.g. `~/Library/Application Support/Supercollider`)**
 
 
@@ -82,4 +74,3 @@ see `DX7Clone_test.scd` for example usage.
 - help file
 - move data file into a class
 - various optimizations
-- fix the synth-freeing method (add DC blocker before DetectSilence maybe.)

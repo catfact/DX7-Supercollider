@@ -190,15 +190,26 @@ DX7Clone {
 
 	feedbackIndex = #[0, 0.0066, 0.0077, 0.011, 0.0153, 0.018, 0.0226, 0.063],
 
-	cirklonCCparse = #[
-		[4,0],[4,1],[4,3],[4,5],[4,4],[4,10],[4,7],[4,8],[4,9],[4,6],[4,2],
-		[4,11],[4,12],[4,13],[4,14],[4,15],[4,16],[4,17],[4,18],
-		[4,48],[3,0],[3,114],[3,12],[3,72],[3,24],[3,30],[3,36],[3,42],[3,48],[3,54],[3,60],[3,66],[3,6], [3,90],[3,102],[3,84],[3,96], [3,78],[3,108],[3,18],
-		[4,49],[3,1],[3,115],[3,13],[3,73],[3,25],[3,31],[3,37],[3,43],[3,49],[3,55],[3,61],[3,67],[3,7], [3,91],[3,103],[3,85],[3,97], [3,79],[3,109],[3,19],
-		[4,50],[3,2],[3,116],[3,14],[3,74],[3,26],[3,32],[3,38],[3,44],[3,50],[3,56],[3,62],[3,68],[3,8], [3,92],[3,104],[3,86],[3,98], [3,80],[3,110],[3,20],
-		[4,51],[3,3],[3,117],[3,15],[3,75],[3,27],[3,33],[3,39],[3,45],[3,51],[3,57],[3,63],[3,69],[3,9], [3,93],[3,105],[3,87],[3,99], [3,81],[3,111],[3,21],
-		[4,52],[3,4],[3,118],[3,16],[3,76],[3,28],[3,34],[3,40],[3,46],[3,52],[3,58],[3,64],[3,70],[3,10],[3,94],[3,106],[3,88],[3,100],[3,82],[3,112],[3,22],
-		[4,53],[3,5],[3,119],[3,17],[3,77],[3,29],[3,35],[3,41],[3,47],[3,53],[3,59],[3,65],[3,71],[3,11],[3,95],[3,107],[3,89],[3,101],[3,83],[3,113],[3,23],
+	cirklonCCparse = # [
+		128, 129, 131, 133, 132, 138, 135, 136,
+		137, 134, 130, 139, 140, 141, 142, 143,
+		144, 145, 146, 176, 0, 114, 12, 72,
+		24, 30, 36, 42, 48, 54, 60, 66,
+		6, 90, 102, 84, 96, 78, 108, 18,
+		177, 1, 115, 13, 73, 25, 31, 37,
+		43, 49, 55, 61, 67, 7, 91, 103,
+		85, 97, 79, 109, 19, 178, 2, 116,
+		14, 74, 26, 32, 38, 44, 50, 56,
+		62, 68, 8, 92, 104, 86, 98, 80,
+		110, 20, 179, 3, 117, 15, 75, 27,
+		33, 39, 45, 51, 57, 63, 69, 9,
+		93, 105, 87, 99, 81, 111, 21, 180,
+		4, 118, 16, 76, 28, 34, 40, 46,
+		52, 58, 64, 70, 10, 94, 106, 88,
+		100, 82, 112, 22, 181, 5, 119, 17,
+		77, 29, 35, 41, 47, 53, 59, 65,
+		71, 11, 95, 107, 89, 101, 83, 113,
+		23
 	],
 
 	outOscVol = #[2, 2, 2, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 3, 3, 4, 4, 4, 5, 5, 3, 3, 3, 4, 4, 5, 6],
@@ -247,8 +258,10 @@ DX7Clone {
 	var s;
 
 	/// FIXME (emb) i dunno about files in classes and pathes and &C
-	var r;
+	var p, r;
 	var g, k;
+	var filedump, numPresets;
+	var noteOnBusy, maxReleaseLength;
 
 	*new { arg server;
 
@@ -256,7 +269,25 @@ DX7Clone {
 	}
 
 
+
+
 	init { arg server;
+		maxReleaseLength = 10;
+		noteOnBusy = false;
+		numPresets = 16383;
+		filedump = Array.new(numPresets);
+		p = Platform.userAppSupportDir ++ "/DX7.afx";
+		r = File(p, "r");
+		// r = File("/home/rick/git_checkouts/DX7-Supercollider/DX7.afx","r");
+		numPresets.do({arg preIdx;
+			// var g;
+			// var nextPreset;
+			g = r.getLine;
+			145.do({arg item;
+				filedump = filedump.add( (g.at((item*2)) ++ g.at((item*2) + 1)).asInt);
+			});
+		});
+		r.close;
 		s = server;
 
 		novaDX7 = ParGroup.new(s);
@@ -279,7 +310,10 @@ DX7Clone {
 
 
 		vr = Array.fill(256, 63);
-		noteArrayDX7 = Array.newClear(128);
+		noteArrayDX7 = Array.newClear(256);
+		noteArrayDX7.size.do( {arg n;
+			noteArrayDX7[n] = Array.newClear(128);
+		});
 
 
 		// FIXME (emb): waste of memory to make YE_WAVE_FORMES a member var
@@ -403,7 +437,7 @@ DX7Clone {
 			//below is the general,
 			osc_sync, transpose,
 			gate1=1, gate1Rel = 1, amp=0.1, totVol;
-			var ctls, mods, chans, out, kilnod,
+			var ctls, mods, chans, out,
 			envAmp1, envEnv1, envAmp2, envEnv2, envAmp3, envEnv3 ,envAmp4, envEnv4, envAmp5, envEnv5, envAmp6, envEnv6, dca, envAmpP, envEnvP;
 			//
 			envEnvP = Env.new([ envPL0, envPL1, envPL2, envPL3, envPL4], [envPR0,envPR1,envPR2,envPR3], 0, 3);
@@ -447,11 +481,12 @@ DX7Clone {
 				(out[4] * 1 * dn40),
 				(out[5] * 1 * dn41),
 			]);
-			/// FIXME (emb): shouldn't need a hard timeout...
-			/// if DC is giving trouble then use a blocking filter
-			/// for now, use a ridiculously long time
-			FreeSelfWhenDone.kr(Line.kr(0, 1, 60 * 60 * 24));
-			kilnod = DetectSilence.ar(out, 0.01, 0.2, doneAction:2);
+			out = HPF.ar(out, 5);
+			if (maxReleaseLength > 0,
+				{FreeSelfWhenDone.kr(Line.kr(0, 1, maxReleaseLength));
+				});
+
+			DetectSilence.ar(out, 0.01, 0.2, doneAction:2);
 			//out = out * Lag2.ar(In.ar(busMe),0.01);
 			//Out.ar([0,1], 0.5 * In.ar(busMe)); //deneme
 			out = out / outMult;
@@ -463,7 +498,9 @@ DX7Clone {
 
 	} // /init
 
-
+	noteFreeTimeout {arg timeout;
+		maxReleaseLength = timeout;
+	}
 
 
 
@@ -593,7 +630,7 @@ DX7Clone {
 			}
 		);
 
-		postln(retval);
+		// postln(retval);
 
 		^retval;
 	}
@@ -717,92 +754,69 @@ DX7Clone {
 
 	}
 
-	noteParser { arg vel, note;
-
-		1.do { arg yxx;
-			if(vel > 0,
-				{
-					//150.do({ arg c; ("cc#" ++ c.asString ++ " = " ++ vr[c]).postln}); //general cc printer, rates are not inverted.
-					if(noteArrayDX7[note] !== nil, { noteArrayDX7[note].free });
+	noteParser { arg chan, vel, note;
+		if(vel > 0,
+			{
+				//150.do({ arg c; ("cc#" ++ c.asString ++ " = " ++ vr[c]).postln}); //general cc printer, rates are not inverted.
+				if(noteArrayDX7[chan][note] !== nil, { noteArrayDX7[chan][note].free });
 
 
-					postln("done free check");
+				// postln("done free check");
 
-					postln(vr);
-					postln(vr[137]);
+				// postln(vr);
+				// postln(vr[137]);
 
-					if(vr[137] == 1, { //lfo sync controller
-						if(betass == 1,   {
-							postln("betass == 1");
-							headno.free;
-							betass = 1;
-							headno = Synth.before(novaDX7,\InfEfx, this.defjamHead(0));
-						},
+				if(vr[137] == 1, { //lfo sync controller
+					if(betass == 1,   {
+						// postln("betass == 1");
+						headno.free;
+						betass = 1;
+						headno = Synth.before(novaDX7,\InfEfx, this.defjamHead(0));
+					},
 						{
 
-							postln("betass != 1");
+							// postln("betass != 1");
 							betass = 1;
 							headno = Synth.before(novaDX7, \InfEfx, this.defjamHead(0));
 						}
 					)},
 					{
-						postln("not lfo");
+						// postln("not lfo");
 						if(betass == 0, {
 							betass = 1;
 							headno = Synth.before(novaDX7, \InfEfx, this.defjamHead(0)).onFree{
-								postln(["freeing", headno]);
+								// postln(["freeing", headno]);
 							};
-							postln(headno);
+							// postln(headno);
 						}, {
 							headno.set(this.defjamHead(0))
 						});
 					});
-					noteArrayDX7[note] = Synth(\DX7, this.defme(note, vel),novaDX7);
-					//noteArrayDX7[note] = Synth(\DX7 ,defme.value(note, vel), novaDX7); //orjburayi addtotail diye degistirdin
+				noteArrayDX7[chan][note] = Synth(\DX7, this.defme(note, vel),novaDX7);
+				//noteArrayDX7[note] = Synth(\DX7 ,defme.value(note, vel), novaDX7); //orjburayi addtotail diye degistirdin
 
-				},
-				{
-					noteArrayDX7[note].set(\gate,0);
-					noteArrayDX7[note] = nil;
+			},
+			{
+				noteArrayDX7[chan][note].set(\gate,0);
+				noteArrayDX7[chan][note] = nil;
 
 			});
-		}
 	}
-
-
-	/// FIXME: this is odd
-	f { arg x, y ,z; //y value, z cc no
-		if(x == 3,
-			{ vr[y] = z },
-			{ vr[y + 128] = z }
-		)
-	}
-
 
 	note {
-		arg x, y, z;
-		var p;
-		if(y > 0, {
-			// FIXME: currently the data file must be installed at top of app support/supercollider.
-			// that's not very great.
-			// more importantly, should absolutely not be loading
-			// plan to just add contents of DX7.afx to a separate data class.
-			p = Platform.userAppSupportDir ++ "/DX7.afx";
-			r = File(p, "r");
-
-			z.do({
-				r.getLine;
-			});
-			g = r.getLine;
-			/// FIXME: seems inefficient
+		arg chan, x, y, z;
+		if((y > 0) && ( y < numPresets),{
 			145.do({arg item;
-				k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
-				this.f(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
-				//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
-
+				vr[cirklonCCparse[item]] = filedump[(z*145)+item];
 			});
 		});
-		this.noteParser(y, x)
+		if(noteOnBusy == false, {
+			noteOnBusy = true;
+			this.noteParser(chan, y, x);
+			noteOnBusy = false;
+		}, {
+			"bpppppffffff!!!! simultaneous note bug!!!".postln;
+		});
 
 	}
 	//// thus endes dx7 by cannc <-- all hail

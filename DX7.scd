@@ -687,8 +687,7 @@ f = { arg x, y ,z; //y value, z cc no
 
 ~mainCaller = { arg x, y, z;
 	if(y > 0,{
-		p = "DX7.afx".resolveRelative;
-		r = File(p, "r");
+		r = File("DX7.afx".resolveRelative,"r");
 		//r = File("/Users/EmanTnuocca/Desktop/3/DX7.afx","r");
 		z.do({
 			r.getLine;
@@ -696,7 +695,7 @@ f = { arg x, y ,z; //y value, z cc no
 		g = r.getLine;
 		145.do({arg item;
 			k = (g.at((item*2)) ++ g.at((item*2) + 1)).asInt;
-			f.value(cirklonCCparse[item][0],cirklonCCparse[item][1],k);x
+			f.value(cirklonCCparse[item][0],cirklonCCparse[item][1],k);
 			//~midiOutDX7.control(~cirklonCCparse[item][0],~cirklonCCparse[item][1],k);
 
 		});
