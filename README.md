@@ -1,28 +1,5 @@
 # DX7-Supercollider
-### Amendments by boqs
-This version of the DX7 clone is based off:
-
-https://github.com/catfact/DX7-Supercollider
-&
-https://github.com/everythingwillbetakenaway/DX7-Supercollider
-
-I'm trying to create a version well-adapted to 14 'instrument
-channels' & one 'drum channel'.  Probably not suitable as a basis for
-future work.  Better to look @ the 2 versions above if you plan on
-using DX7-Supercollider in another project.  See below for original
-README.
-
-To test out my program under linux/jack, make sure the DX7Clone.sc
-class is in your ~/.local/share/SuperCollider/Extensions/ directory.
-Ensure DX7.afx is in ~/.local/share/Supercollider directory. then
-sclang DX7Clone_test.scd from anywhere.
-
-Know bug: if cpu load gets too high & there are XRUNS, there's a
-possibility of weird 'octave jumps'.  This is annoying - currently
-looking for a solution!
-
-### My accurate
-Yamaha DX-7 clone. Programmed in Supercollider.
+### My accurate Yamaha DX-7 clone. Programmed in Supercollider.
 
 This is a super-exact clone of DX7 in SC environment. This project began with my internship at the STEIM during the last year; I was able to get my hands on an original DX7 synth and eventually found out that this instrument has this mystic / unusual sound. So I started fiddling with it and did some experiments with Supercollider. After a while, it became an obsession to play with it and started to copy parts of its synth mechanism just to flex my DSP muscles. Sooner, I found myself in this vast project to clone the entire thing. After 2-3 months of implementing process and lots of sleepless nights. I was able to clone the entire DX7 engine with very high accurate results. Other than the DX7’s vintage sound hiss, it is hard to distinguish between the clone and the original one on the same presets. For my use, I collected some 16384 (2^14) DX7 Sysex bank presets from the internet and converted it to some integer sequences to read it from Supercollider. I am also combining this clone with this 16384 preset package. Currently, I am using it with my sequencers to modulate its parameters, but for everyone's ease of use, I implemented a very basic function call. Which calls notes with this format: [Midi note, velocity, preset number]. Additional documentation is in the file. Have fun!
 
